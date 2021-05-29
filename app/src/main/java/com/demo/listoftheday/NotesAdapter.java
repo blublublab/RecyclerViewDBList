@@ -7,13 +7,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 public class NotesAdapter  extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
-    private ArrayList<Note> notes;
+    private final ArrayList<Note> notes;
     public NotesAdapter(ArrayList<Note> notes) {
         this.notes = notes;
     }

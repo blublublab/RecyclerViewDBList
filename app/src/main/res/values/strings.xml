@@ -8,7 +8,6 @@
     <string name="hint_note_description">Описание заметки:</string>
     <string name="hint_note_title">Название заметки:</string>
     <string name="text_view_priority_note">Приоритет заметки:</string>
-    <string name="toast_alert_not_all_strings_set">Все поля должны быть заполнены</string>
 
     <string-array name="spinner_day_of_week">
         <item>Понедельник</item>

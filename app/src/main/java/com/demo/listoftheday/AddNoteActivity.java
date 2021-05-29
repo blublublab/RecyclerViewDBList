@@ -1,10 +1,6 @@
 package com.demo.listoftheday;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,12 +9,12 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import static com.demo.listoftheday.R.string.material_hour_selection;
-import static com.demo.listoftheday.R.string.radio_button_1;
-import static com.demo.listoftheday.R.string.toast_alert_not_all_strings_set;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
+
+import java.util.Objects;
 
 public class AddNoteActivity extends AppCompatActivity {
     private RadioGroup radioGroupPriority;
@@ -30,22 +26,20 @@ public class AddNoteActivity extends AppCompatActivity {
     private int priority;
     private int idOfChangingNote;
     private String dayOfTheWeek;
-    private NotesDBHelper dbHelper;
-    private SQLiteDatabase database;
     RadioButton radioButton1;
     RadioButton radioButton2;
     RadioButton radioButton3;
-
+    private MainViewModel viewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
-        getSupportActionBar().hide();
-        dbHelper = new NotesDBHelper(this);
-        database = dbHelper.getWritableDatabase();
+        Objects.requireNonNull(getSupportActionBar()).hide();
         radioButton1 = findViewById(R.id.radioButton1);
         radioButton2 = findViewById(R.id.radioButton2);
         radioButton3 = findViewById(R.id.radioButton3);
+
+        viewModel =  ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(MainViewModel.class);
         radioGroupPriority = findViewById(R.id.radioGroupPriority);
         editTextNoteTitle = findViewById(R.id.editTextNoteTitle);
         editTextNoteDescription = findViewById(R.id.editTextNoteDescription);
@@ -53,19 +47,6 @@ public class AddNoteActivity extends AppCompatActivity {
         Intent intent = getIntent();
         idOfChangingNote = intent.getIntExtra("id", 0);
         if (idOfChangingNote != 0) {
-            String selection = "_id  = ? ";
-            String[] selectionArgs = new String[]{String.valueOf(idOfChangingNote)};
-            Cursor cursor = database.query(NotesContract.NoteEntry.TABLE_NAME, null, selection, selectionArgs, null, null, null);
-            while (cursor.moveToNext()) {
-                noteTitle = cursor.getString(cursor.getColumnIndex(NotesContract.NoteEntry.COLUMN_TITLE));
-                noteDescription = cursor.getString(cursor.getColumnIndex(NotesContract.NoteEntry.COLUMN_DESCRIPTION));
-                dayOfTheWeek = cursor.getString(cursor.getColumnIndex(NotesContract.NoteEntry.COLUMN_DAY_OF_WEEK));
-                priority = cursor.getInt(cursor.getColumnIndex(NotesContract.NoteEntry.COLUMN_PRIORITY));
-                editTextNoteTitle.setText(noteTitle);
-                editTextNoteDescription.setText(noteDescription);
-                //
-            }
-            cursor.close();
             radioGroupPriority.clearCheck();
 
             switch (priority) {
@@ -78,7 +59,6 @@ public class AddNoteActivity extends AppCompatActivity {
                     radioButton3.toggle();
 
             }
-            ;
         }
 
             radioGroupPriority.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -106,26 +86,24 @@ public class AddNoteActivity extends AppCompatActivity {
         }
 
     public void onClickAddNote (View view){
-        noteTitle = editTextNoteTitle.getText().toString();
-        noteDescription = editTextNoteDescription.getText().toString();
+        noteTitle = String.valueOf(editTextNoteTitle.getText());
+        noteDescription = String.valueOf(editTextNoteDescription.getText());
         dayOfTheWeek = spinnerDayOfWeek.getSelectedItem().toString();
-        if (isFilled(noteTitle, noteDescription)) {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(NotesContract.NoteEntry.COLUMN_TITLE, noteTitle);
-            contentValues.put(NotesContract.NoteEntry.COLUMN_DESCRIPTION, noteDescription);
-            contentValues.put(NotesContract.NoteEntry.COLUMN_DAY_OF_WEEK, dayOfTheWeek);
-            contentValues.put(NotesContract.NoteEntry.COLUMN_PRIORITY, priority);
-            database.insert(NotesContract.NoteEntry.TABLE_NAME, null, contentValues);
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        } else {
-            Log.i("LOG", "Поля не заполнены");
-            Toast.makeText(this, toast_alert_not_all_strings_set, Toast.LENGTH_SHORT).show();
+
+
+        if(isFilled(noteTitle, noteDescription)){
+            Note note = new Note (noteTitle, noteDescription, dayOfTheWeek, priority);
+            viewModel.insertNote(note);
+            Intent backToMenuIntent = new Intent(AddNoteActivity.this, MainActivity.class);
+            startActivity(backToMenuIntent);
+
         }
+
+
     }
 
-    private boolean isFilled(String title, String description) {
-        return !title.isEmpty() && !noteDescription.isEmpty();
+    private boolean isFilled(String noteTitle, String noteDescription) {
+        return !noteTitle.isEmpty() && !noteDescription.isEmpty();
     }
 
 }
